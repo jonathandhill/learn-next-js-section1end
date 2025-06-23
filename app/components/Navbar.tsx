@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseClient } from '@/lib/supabase/shared-client';
 import PFLogoIcon from '@/public/printforge-logo-icon.svg';
 import PFLogo from '@/public/printforge-logo.svg';
 
@@ -13,7 +13,7 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
 
     // Get initial session
     const getSession = async () => {
@@ -38,7 +38,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     await supabase.auth.signOut();
     router.push('/login');
   };
