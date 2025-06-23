@@ -1,33 +1,34 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from 'react';
 
 // Data Types
 export type Model = {
-  id: number
-  name: string
-  description: string
-  likes: number
-  image: string
-  category: string
-  dateAdded: string
-}
+  id: number;
+  name: string;
+  description: string;
+  likes: number;
+  image: string;
+  category: string;
+  dateAdded: string;
+  user_id?: string; // Optional for backward compatibility with existing data
+};
 
 // Page Types
 export type RootLayoutProps = Readonly<{
   children: React.ReactNode;
-}>
+}>;
 
 export type ModelDetailPageProps = {
-    params: Promise<{
-        id: string
-    }>
-}
+  params: Promise<{
+    id: string;
+  }>;
+};
 
 // Components Types
 export type ModelCardProps = {
-    model: Model
-}
+  model: Model;
+};
 
 export type PillProps = {
-    children: ReactNode
-    className?: string
-}
+  children: ReactNode;
+  className?: string;
+};
