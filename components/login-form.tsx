@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function LoginForm({
   className,
@@ -26,6 +26,42 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Debug environment variables on component mount
+  useEffect(() => {
+    console.log('Login form - Environment check:');
+    console.log(
+      'NEXT_PUBLIC_SUPABASE_URL:',
+      process.env.NEXT_PUBLIC_SUPABASE_URL
+    );
+    console.log(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY exists:',
+      !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+    console.log(
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY length:',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length
+    );
+
+    // Test Supabase connection
+    const testConnection = async () => {
+      try {
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase
+          .from('models')
+          .select('count')
+          .limit(1);
+        console.log('Supabase connection test:', {
+          success: !error,
+          error: error?.message,
+        });
+      } catch (err) {
+        console.log('Supabase connection test failed:', err);
+      }
+    };
+
+    testConnection();
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = getSupabaseClient();
@@ -33,10 +69,15 @@ export function LoginForm({
     setError(null);
 
     try {
+      console.log('Login form - Starting login process');
+      console.log('Login form - Email:', email);
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      console.log('Login form - Sign in result:', { error: error?.message });
+
       if (error) throw error;
 
       // Check if we have a session after login
@@ -45,6 +86,16 @@ export function LoginForm({
       } = await supabase.auth.getSession();
       console.log('Session after login:', session ? 'exists' : 'none');
       console.log('User:', session?.user?.email);
+      console.log(
+        'Session details:',
+        session
+          ? {
+              access_token: session.access_token ? 'exists' : 'none',
+              refresh_token: session.refresh_token ? 'exists' : 'none',
+              expires_at: session.expires_at,
+            }
+          : 'no session'
+      );
 
       if (!session) {
         console.log('No session after login, attempting to refresh');
@@ -56,6 +107,11 @@ export function LoginForm({
         });
 
         if (!refreshData.session) {
+          console.log('Session refresh failed, checking auth state');
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          console.log('Current user after failed refresh:', user?.email);
           throw new Error('Failed to establish session after login');
         }
       }
