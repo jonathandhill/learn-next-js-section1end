@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LogoutButton } from '@/components/logout-button';
-import { createClient } from '@/lib/supabase/server';
-import { getModelsByUserId } from '@/lib/models';
-import ModelCard from '@/app/components/ModelCard';
-import type { Model } from '@/app/types';
+import { LogoutButton } from '../../components/logout-button';
+import { createClient } from '../../lib/supabase/server';
+import { getModelsByUserId } from '../../lib/models';
+import ModelCard from '../components/ModelCard';
+import type { Model } from '../types';
 
 export default async function ProtectedPage() {
   const supabase = await createClient();

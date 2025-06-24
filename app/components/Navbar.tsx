@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getSupabaseClient } from '@/lib/supabase/shared-client';
-import PFLogoIcon from '@/public/printforge-logo-icon.svg';
-import PFLogo from '@/public/printforge-logo.svg';
+import { getSupabaseClient } from '../../lib/supabase/shared-client';
+import PFLogoIcon from '../../public/printforge-logo-icon.svg';
+import PFLogo from '../../public/printforge-logo.svg';
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null);
