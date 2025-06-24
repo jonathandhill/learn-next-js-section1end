@@ -38,8 +38,38 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
+
+      // Check if we have a session after login
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      console.log('Session after login:', session ? 'exists' : 'none');
+      console.log('User:', session?.user?.email);
+
+      if (!session) {
+        console.log('No session after login, attempting to refresh');
+        const { data: refreshData, error: refreshError } =
+          await supabase.auth.refreshSession();
+        console.log('Session refresh after login:', {
+          success: !!refreshData.session,
+          error: refreshError?.message,
+        });
+
+        if (!refreshData.session) {
+          throw new Error('Failed to establish session after login');
+        }
+      }
+
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push('/protected');
+      console.log('Login successful, attempting redirect to /protected');
+
+      // Try router.push first, fallback to window.location if needed
+      try {
+        router.push('/protected');
+      } catch (routerError) {
+        console.log('Router push failed, using window.location:', routerError);
+        window.location.href = '/protected';
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {

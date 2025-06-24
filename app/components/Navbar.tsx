@@ -67,8 +67,36 @@ export default function Navbar() {
         window.location.href = '/protected';
       }
     } else {
-      console.log('Navbar - No session found, redirecting to login');
-      router.push('/login');
+      console.log('Navbar - No session found, attempting to refresh session');
+
+      // Try to refresh the session
+      const { data: refreshData, error: refreshError } =
+        await supabase.auth.refreshSession();
+      console.log('Navbar - Session refresh result:', {
+        success: !!refreshData.session,
+        error: refreshError?.message,
+      });
+
+      if (refreshData.session) {
+        console.log('Navbar - Session refreshed, attempting navigation');
+        try {
+          router.push('/protected');
+        } catch (error) {
+          console.log(
+            'Navbar - Router push failed, using window.location:',
+            error
+          );
+          window.location.href = '/protected';
+        }
+      } else {
+        console.log('Navbar - Session refresh failed, redirecting to login');
+        // Clear the stale user state
+        setUser(null);
+
+        // Try a hard refresh to /protected first, let middleware handle the redirect
+        console.log('Navbar - Attempting hard refresh to /protected');
+        window.location.href = '/protected';
+      }
     }
   };
 
