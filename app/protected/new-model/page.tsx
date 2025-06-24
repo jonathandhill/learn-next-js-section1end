@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '../../../lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 // Server Action to handle form submission
 async function createModel(formData: FormData) {

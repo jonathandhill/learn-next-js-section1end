@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { getAllModels } from '../../lib/models';
-import type { Model } from '../types';
-import ModelCard from '../components/ModelCard';
+import { getAllModels } from '@/lib/models';
+import type { Model } from '@/app/types';
+import ModelCard from '@/app/components/ModelCard';
 
 export default async function ModelsPage() {
   const models = await getAllModels();

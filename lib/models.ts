@@ -1,5 +1,5 @@
-import type { Model } from '../app/types';
-import { createClient } from './supabase/server';
+import type { Model } from '@/app/types';
+import { createClient } from '@/lib/supabase/server';
 
 export async function getAllModels(): Promise<Model[]> {
   // This is where you'd write code to fetch the list
