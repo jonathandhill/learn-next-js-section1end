@@ -43,6 +43,35 @@ export default function Navbar() {
     router.push('/login');
   };
 
+  const handleProtectedClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Navbar - User attempting to access /protected');
+    console.log('Navbar - Current user:', user?.email);
+
+    // Check session before navigation
+    const supabase = getSupabaseClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    console.log('Navbar - Session check:', session ? 'exists' : 'none');
+
+    if (session) {
+      console.log('Navbar - Attempting navigation to /protected');
+      try {
+        router.push('/protected');
+      } catch (error) {
+        console.log(
+          'Navbar - Router push failed, using window.location:',
+          error
+        );
+        window.location.href = '/protected';
+      }
+    } else {
+      console.log('Navbar - No session found, redirecting to login');
+      router.push('/login');
+    }
+  };
+
   return (
     <header className="w-full bg-white">
       <nav className="flex justify-between px-6 py-4">
@@ -71,9 +100,12 @@ export default function Navbar() {
           </li>
           {!loading && user && (
             <li className="text-sm uppercase cursor-pointer">
-              <Link href="/protected" className="hover:underline">
+              <button
+                onClick={handleProtectedClick}
+                className="hover:underline bg-transparent border-none p-0 font-inherit text-sm uppercase cursor-pointer"
+              >
                 {user.email?.split('@')[0] || 'Dashboard'}
-              </Link>
+              </button>
             </li>
           )}
           <li className="text-sm uppercase cursor-pointer">

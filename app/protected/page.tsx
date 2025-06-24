@@ -10,7 +10,13 @@ export default async function ProtectedPage() {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getUser();
+  console.log('Protected page - Auth check:', {
+    user: data?.user?.email,
+    error,
+  });
+
   if (error || !data?.user) {
+    console.log('Protected page - Redirecting to login (no user or error)');
     redirect('/login');
   }
 
