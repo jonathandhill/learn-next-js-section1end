@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export function LoginForm({
   className,
@@ -28,9 +28,10 @@ export function LoginForm({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = getSupabaseClient();
     setIsLoading(true);
     setError(null);
+
+    const supabase = getSupabaseClient();
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -38,20 +39,20 @@ export function LoginForm({
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Wait for the session to be established
+      // Check if we have a session
       if (data.session) {
         // Force a page refresh to ensure middleware picks up the new session
         window.location.href = '/protected';
       } else {
-        // Fallback: wait a bit and then redirect
-        setTimeout(() => {
-          router.push('/protected');
-        }, 100);
+        throw new Error('Login failed - no session created');
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      console.error('Login error:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred during login');
       setIsLoading(false);
     }
   };
@@ -77,6 +78,7 @@ export function LoginForm({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -95,9 +97,14 @@ export function LoginForm({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && (
+                <div className="text-sm text-red-500 bg-red-50 p-3 rounded-md">
+                  {error}
+                </div>
+              )}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>

@@ -17,11 +17,16 @@ export default function Navbar() {
 
     // Get initial session
     const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
+      }
     };
 
     getSession();
@@ -29,14 +34,15 @@ export default function Navbar() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setUser(session?.user ?? null);
       setLoading(false);
       
       // Handle auth state changes for better UX
       if (event === 'SIGNED_IN' && session) {
-        // User just signed in, redirect to protected page if not already there
-        if (window.location.pathname === '/login' || window.location.pathname === '/auth/login') {
+        // User just signed in, redirect to protected page if on login page
+        if (window.location.pathname === '/auth/login' || window.location.pathname === '/login') {
           window.location.href = '/protected';
         }
       } else if (event === 'SIGNED_OUT') {
@@ -52,8 +58,12 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     const supabase = getSupabaseClient();
-    await supabase.auth.signOut();
-    router.push('/');
+    try {
+      await supabase.auth.signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -94,7 +104,7 @@ export default function Navbar() {
               (user ? (
                 <button
                   onClick={handleLogout}
-                  className="text-sm uppercase cursor-pointer bg-transparent border-none p-0 font-inherit"
+                  className="text-sm uppercase cursor-pointer bg-transparent border-none p-0 font-inherit hover:underline"
                 >
                   Logout
                 </button>
