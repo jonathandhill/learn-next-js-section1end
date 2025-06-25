@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function LoginForm({
   className,
@@ -33,16 +33,25 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push('/protected');
+
+      // Wait for the session to be established
+      if (data.session) {
+        // Force a page refresh to ensure middleware picks up the new session
+        window.location.href = '/protected';
+      } else {
+        // Fallback: wait a bit and then redirect
+        setTimeout(() => {
+          router.push('/protected');
+        }, 100);
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred');
-    } finally {
       setIsLoading(false);
     }
   };

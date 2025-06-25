@@ -55,15 +55,14 @@ export function SignUpForm({
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        // User is signed in, redirect to protected page
-        router.push('/protected');
+        // User is signed in, force page refresh to ensure middleware picks up the session
+        window.location.href = '/protected';
       } else {
         // Email confirmation is required, redirect to success page
         router.push('/auth/sign-up-success');
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred');
-    } finally {
       setIsLoading(false);
     }
   };

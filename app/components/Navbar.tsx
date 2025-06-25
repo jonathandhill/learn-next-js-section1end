@@ -32,15 +32,28 @@ export default function Navbar() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Handle auth state changes for better UX
+      if (event === 'SIGNED_IN' && session) {
+        // User just signed in, redirect to protected page if not already there
+        if (window.location.pathname === '/login' || window.location.pathname === '/auth/login') {
+          window.location.href = '/protected';
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out, redirect to home if on protected page
+        if (window.location.pathname.startsWith('/protected')) {
+          router.push('/');
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
-    router.push('/login');
+    router.push('/');
   };
 
   return (
@@ -86,7 +99,7 @@ export default function Navbar() {
                   Logout
                 </button>
               ) : (
-                <Link href="/login">Login</Link>
+                <Link href="/auth/login">Login</Link>
               ))}
           </li>
         </ul>
