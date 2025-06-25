@@ -46,36 +46,19 @@ export function LoginForm({
 
       console.log('🎉 Login successful, waiting for session to be ready...');
 
-      // Wait for the session to be established using auth state change
-      const sessionReady = new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Session establishment timeout'));
-        }, 10000); // 10 second timeout
+      // Wait a moment for session to be established (StackBlitz timing issue)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
-          console.log(
-            '🔄 Auth state change during login:',
-            event,
-            session ? 'session exists' : 'no session'
-          );
+      // Check for session after delay
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      console.log('🔍 Session check after delay:', session ? 'exists' : 'none');
 
-          if (event === 'SIGNED_IN' && session) {
-            clearTimeout(timeout);
-            subscription.unsubscribe();
-            resolve(session);
-          }
-        });
-      });
-
-      try {
-        await sessionReady;
+      if (session) {
         console.log('✅ Session ready, redirecting to /protected');
         router.push('/protected');
-      } catch (sessionError) {
-        console.log('❌ Session establishment failed:', sessionError);
-
+      } else {
         // Fallback: check if user is signed in anyway
         const {
           data: { user },
