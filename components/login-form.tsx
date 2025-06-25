@@ -44,77 +44,49 @@ export function LoginForm({
 
       if (error) throw error;
 
-      // Check if we have a session after login
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      console.log('✅ Session after login:', session ? 'exists' : 'none');
-      console.log('👤 User:', session?.user?.email);
-      console.log(
-        '🔍 Session details:',
-        session
-          ? {
-              access_token: session.access_token ? 'exists' : 'none',
-              refresh_token: session.refresh_token ? 'exists' : 'none',
-              expires_at: session.expires_at,
-            }
-          : 'no session'
-      );
+      console.log('🎉 Login successful, waiting for session to be ready...');
 
-      if (!session) {
-        console.log('⚠️ No session after login, attempting to refresh');
-        const { data: refreshData, error: refreshError } =
-          await supabase.auth.refreshSession();
-        console.log('🔄 Session refresh after login:', {
-          success: !!refreshData.session,
-          error: refreshError?.message,
-        });
+      // Wait for the session to be established using auth state change
+      const sessionReady = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Session establishment timeout'));
+        }, 10000); // 10 second timeout
 
-        if (!refreshData.session) {
-          console.log('❌ Session refresh failed, trying with delay...');
-
-          // Try again after a short delay (StackBlitz session sync issue)
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          const { data: retryData } = await supabase.auth.getSession();
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
           console.log(
-            '🔄 Retry session check:',
-            retryData.session ? 'exists' : 'none'
+            '🔄 Auth state change during login:',
+            event,
+            session ? 'session exists' : 'no session'
           );
 
-          if (!retryData.session) {
-            console.log('❌ Session still not available, checking auth state');
-            const {
-              data: { user },
-            } = await supabase.auth.getUser();
-            console.log('👤 Current user after failed refresh:', user?.email);
-
-            // If we have a user but no session, try one more time with longer delay
-            if (user) {
-              console.log('👤 User exists, waiting longer for session...');
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-
-              const { data: finalData } = await supabase.auth.getSession();
-              if (finalData.session) {
-                console.log('✅ Session finally available after delay');
-              } else {
-                throw new Error('Failed to establish session after login');
-              }
-            } else {
-              throw new Error('Failed to establish session after login');
-            }
+          if (event === 'SIGNED_IN' && session) {
+            clearTimeout(timeout);
+            subscription.unsubscribe();
+            resolve(session);
           }
+        });
+      });
+
+      try {
+        await sessionReady;
+        console.log('✅ Session ready, redirecting to /protected');
+        router.push('/protected');
+      } catch (sessionError) {
+        console.log('❌ Session establishment failed:', sessionError);
+
+        // Fallback: check if user is signed in anyway
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          console.log('👤 User is signed in, proceeding with redirect anyway');
+          router.push('/protected');
+        } else {
+          throw new Error('Failed to establish session after login');
         }
       }
-
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      console.log('🎉 Login successful, redirecting to /protected');
-
-      // Wait a moment for session to be fully established (StackBlitz issue)
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Use router.push for client-side navigation
-      router.push('/protected');
     } catch (error: unknown) {
       console.error('💥 Login error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
