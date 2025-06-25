@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getModelsByUserId } from '@/lib/models';
 import ModelCard from '@/app/components/ModelCard';
 import type { Model } from '@/app/types';
+import { ClientUserInfo } from '../components/ClientUserInfo';
 
 export default async function ProtectedPage() {
   console.log('🏠 Protected page - Starting to load');
@@ -37,8 +38,7 @@ export default async function ProtectedPage() {
         <div>
           <h1 className="text-3xl font-bold">My Submissions</h1>
           <p className="text-gray-600 mt-2">
-            Welcome back,{' '}
-            <span className="font-semibold">{data?.user?.email || 'User'}</span>
+            Welcome back, <ClientUserInfo />
           </p>
         </div>
         <div className="flex items-center gap-4">
