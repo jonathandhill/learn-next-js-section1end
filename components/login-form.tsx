@@ -63,47 +63,8 @@ export function LoginForm({
 
       if (error) throw error;
 
-      console.log('🎉 Login successful, waiting for session to be ready...');
-
-      // Wait for the auth state change to confirm session is ready
-      const sessionReady = new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Session establishment timeout'));
-        }, 5000); // 5 second timeout
-
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange((event, session) => {
-          console.log(
-            '🔄 Login form auth state change:',
-            event,
-            session ? 'session exists' : 'no session'
-          );
-
-          if (event === 'SIGNED_IN' && session) {
-            clearTimeout(timeout);
-            subscription.unsubscribe();
-            resolve(session);
-          }
-        });
-      });
-
-      try {
-        await sessionReady;
-        console.log('✅ Session confirmed ready via auth state change');
-
-        // Wait a moment for cookies to sync (StackBlitz issue)
-        console.log('⏳ Waiting for cookies to sync...');
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-
-        window.location.href = '/protected';
-      } catch (sessionError) {
-        console.log('❌ Session establishment failed:', sessionError);
-
-        // Final fallback: just try to redirect anyway
-        console.log('🚀 Final fallback: attempting redirect anyway');
-        window.location.href = '/protected';
-      }
+      console.log('🎉 Login successful, redirecting immediately');
+      window.location.href = '/protected';
     } catch (error: unknown) {
       console.error('💥 Login error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
