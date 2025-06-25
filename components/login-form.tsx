@@ -33,14 +33,60 @@ export function LoginForm({
     setError(null);
 
     try {
+      console.log('🔐 Login form - Starting login process');
+      console.log('📧 Login form - Email:', email);
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      console.log('🔑 Login form - Sign in result:', { error: error?.message });
+
       if (error) throw error;
+
+      // Check if we have a session after login
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      console.log('✅ Session after login:', session ? 'exists' : 'none');
+      console.log('👤 User:', session?.user?.email);
+      console.log(
+        '🔍 Session details:',
+        session
+          ? {
+              access_token: session.access_token ? 'exists' : 'none',
+              refresh_token: session.refresh_token ? 'exists' : 'none',
+              expires_at: session.expires_at,
+            }
+          : 'no session'
+      );
+
+      if (!session) {
+        console.log('⚠️ No session after login, attempting to refresh');
+        const { data: refreshData, error: refreshError } =
+          await supabase.auth.refreshSession();
+        console.log('🔄 Session refresh after login:', {
+          success: !!refreshData.session,
+          error: refreshError?.message,
+        });
+
+        if (!refreshData.session) {
+          console.log('❌ Session refresh failed, checking auth state');
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          console.log('👤 Current user after failed refresh:', user?.email);
+          throw new Error('Failed to establish session after login');
+        }
+      }
+
       // Update this route to redirect to an authenticated route. The user already has an active session.
+      console.log('🎉 Login successful, redirecting to /protected');
+
+      // Use router.push for client-side navigation
       router.push('/protected');
     } catch (error: unknown) {
+      console.error('💥 Login error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setIsLoading(false);

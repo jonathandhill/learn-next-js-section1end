@@ -7,12 +7,23 @@ import ModelCard from '@/app/components/ModelCard';
 import type { Model } from '@/app/types';
 
 export default async function ProtectedPage() {
+  console.log('🏠 Protected page - Starting to load');
+
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getUser();
+  console.log('🔍 Protected page - Auth check:', {
+    user: data?.user?.email,
+    userId: data?.user?.id,
+    error: error?.message,
+  });
+
   if (error || !data?.user) {
+    console.log('❌ Protected page - No user or error, redirecting to login');
     redirect('/login');
   }
+
+  console.log('✅ Protected page - User authenticated, loading content');
 
   // Get the user's models
   const userModels = await getModelsByUserId(data.user.id);

@@ -17,9 +17,12 @@ export default function Navbar() {
 
     // Get initial session
     const getSession = async () => {
+      console.log('🔄 Navbar - Getting initial session');
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      console.log('📋 Navbar - Initial session:', session ? 'exists' : 'none');
+      console.log('👤 Navbar - Initial user:', session?.user?.email);
       setUser(session?.user ?? null);
       setLoading(false);
     };
@@ -30,6 +33,12 @@ export default function Navbar() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Navbar - Auth state change:', event);
+      console.log(
+        '👤 Navbar - Session in auth change:',
+        session ? 'exists' : 'none'
+      );
+      console.log('👤 Navbar - User in auth change:', session?.user?.email);
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -41,6 +50,32 @@ export default function Navbar() {
     const supabase = getSupabaseClient();
     await supabase.auth.signOut();
     router.push('/login');
+  };
+
+  const handleProtectedClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('🔗 Navbar - User clicking protected link');
+    console.log('👤 Navbar - Current user state:', user?.email);
+
+    // Check session before navigation
+    const supabase = getSupabaseClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    console.log(
+      '🔍 Navbar - Session check before navigation:',
+      session ? 'exists' : 'none'
+    );
+    console.log('👤 Navbar - User in session check:', session?.user?.email);
+
+    if (session) {
+      console.log('✅ Navbar - Session exists, navigating to /protected');
+      router.push('/protected');
+    } else {
+      console.log('❌ Navbar - No session found, redirecting to login');
+      setUser(null);
+      router.push('/login');
+    }
   };
 
   return (
@@ -71,9 +106,12 @@ export default function Navbar() {
           </li>
           {!loading && user && (
             <li className="text-sm uppercase cursor-pointer">
-              <Link href="/protected" className="hover:underline">
+              <button
+                onClick={handleProtectedClick}
+                className="hover:underline bg-transparent border-none p-0 font-inherit text-sm uppercase cursor-pointer"
+              >
                 {user.email?.split('@')[0] || 'Dashboard'}
-              </Link>
+              </button>
             </li>
           )}
           <li className="text-sm uppercase cursor-pointer">

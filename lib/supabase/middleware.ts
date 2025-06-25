@@ -39,12 +39,19 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  console.log('🛡️ Middleware - Pathname:', request.nextUrl.pathname);
+  console.log('👤 Middleware - User:', user ? user.email : 'none');
+  console.log('🔍 Middleware - User ID:', user?.id);
+
   if (!user && request.nextUrl.pathname.startsWith('/protected')) {
     // no user, redirect to login page for protected routes only
+    console.log('🚫 Middleware - No user, redirecting to login');
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
+
+  console.log('✅ Middleware - User authenticated, allowing access');
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
