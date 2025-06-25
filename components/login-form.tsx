@@ -46,6 +46,16 @@ export function LoginForm({
 
       console.log('🎉 Login successful, waiting for session to be ready...');
 
+      // Check current auth state immediately after login
+      console.log('🔍 Checking current auth state after login');
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+      console.log(
+        '👤 Current user after login:',
+        currentUser ? currentUser.email : 'none'
+      );
+
       // Wait a moment for session to be established (StackBlitz timing issue)
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -55,7 +65,22 @@ export function LoginForm({
       } = await supabase.auth.getSession();
       console.log('🔍 Session check after delay:', session ? 'exists' : 'none');
 
-      if (session) {
+      // Also try getting the session from the browser client directly
+      console.log('🔍 Trying direct browser client session check');
+      const { createBrowserClient } = await import('@supabase/ssr');
+      const directClient = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const {
+        data: { session: directSession },
+      } = await directClient.auth.getSession();
+      console.log(
+        '🔍 Direct client session check:',
+        directSession ? 'exists' : 'none'
+      );
+
+      if (session || directSession) {
         console.log('✅ Session ready, redirecting to /protected');
         window.location.href = '/protected';
       } else {
