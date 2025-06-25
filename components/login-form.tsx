@@ -57,16 +57,43 @@ export function LoginForm({
 
       if (session) {
         console.log('✅ Session ready, redirecting to /protected');
-        router.push('/protected');
+        window.location.href = '/protected';
       } else {
         // Fallback: check if user is signed in anyway
+        console.log('🔍 Fallback: checking if user is signed in');
+
+        // Try to refresh the session first
+        console.log('🔄 Attempting session refresh in fallback');
+        const { data: refreshData, error: refreshError } =
+          await supabase.auth.refreshSession();
+        console.log('🔄 Session refresh result:', {
+          success: !!refreshData.session,
+          error: refreshError?.message,
+        });
+
         const {
           data: { user },
         } = await supabase.auth.getUser();
+        console.log(
+          '👤 Fallback user check result:',
+          user ? user.email : 'none'
+        );
+        console.log(
+          '🔍 Fallback user details:',
+          user
+            ? {
+                id: user.id,
+                email: user.email,
+                created_at: user.created_at,
+              }
+            : 'no user'
+        );
+
         if (user) {
           console.log('👤 User is signed in, proceeding with redirect anyway');
-          router.push('/protected');
+          window.location.href = '/protected';
         } else {
+          console.log('❌ No user found in fallback check');
           throw new Error('Failed to establish session after login');
         }
       }
