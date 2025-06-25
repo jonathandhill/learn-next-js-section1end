@@ -46,81 +46,39 @@ export function LoginForm({
 
       console.log('🎉 Login successful, waiting for session to be ready...');
 
-      // Check current auth state immediately after login
-      console.log('🔍 Checking current auth state after login');
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-      console.log(
-        '👤 Current user after login:',
-        currentUser ? currentUser.email : 'none'
-      );
-
-      // Wait a moment for session to be established (StackBlitz timing issue)
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Check for session after delay
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      console.log('🔍 Session check after delay:', session ? 'exists' : 'none');
-
-      // Also try getting the session from the browser client directly
-      console.log('🔍 Trying direct browser client session check');
-      const { createBrowserClient } = await import('@supabase/ssr');
-      const directClient = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-      const {
-        data: { session: directSession },
-      } = await directClient.auth.getSession();
-      console.log(
-        '🔍 Direct client session check:',
-        directSession ? 'exists' : 'none'
-      );
-
-      if (session || directSession) {
-        console.log('✅ Session ready, redirecting to /protected');
-        window.location.href = '/protected';
-      } else {
-        // Fallback: check if user is signed in anyway
-        console.log('🔍 Fallback: checking if user is signed in');
-
-        // Try to refresh the session first
-        console.log('🔄 Attempting session refresh in fallback');
-        const { data: refreshData, error: refreshError } =
-          await supabase.auth.refreshSession();
-        console.log('🔄 Session refresh result:', {
-          success: !!refreshData.session,
-          error: refreshError?.message,
-        });
+      // Wait for the auth state change to confirm session is ready
+      const sessionReady = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Session establishment timeout'));
+        }, 5000); // 5 second timeout
 
         const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        console.log(
-          '👤 Fallback user check result:',
-          user ? user.email : 'none'
-        );
-        console.log(
-          '🔍 Fallback user details:',
-          user
-            ? {
-                id: user.id,
-                email: user.email,
-                created_at: user.created_at,
-              }
-            : 'no user'
-        );
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, session) => {
+          console.log(
+            '🔄 Login form auth state change:',
+            event,
+            session ? 'session exists' : 'no session'
+          );
 
-        if (user) {
-          console.log('👤 User is signed in, proceeding with redirect anyway');
-          window.location.href = '/protected';
-        } else {
-          console.log('❌ No user found in fallback check');
-          throw new Error('Failed to establish session after login');
-        }
+          if (event === 'SIGNED_IN' && session) {
+            clearTimeout(timeout);
+            subscription.unsubscribe();
+            resolve(session);
+          }
+        });
+      });
+
+      try {
+        await sessionReady;
+        console.log('✅ Session confirmed ready via auth state change');
+        window.location.href = '/protected';
+      } catch (sessionError) {
+        console.log('❌ Session establishment failed:', sessionError);
+
+        // Final fallback: just try to redirect anyway
+        console.log('🚀 Final fallback: attempting redirect anyway');
+        window.location.href = '/protected';
       }
     } catch (error: unknown) {
       console.error('💥 Login error:', error);
