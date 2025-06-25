@@ -71,17 +71,47 @@ export function LoginForm({
         });
 
         if (!refreshData.session) {
-          console.log('❌ Session refresh failed, checking auth state');
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          console.log('👤 Current user after failed refresh:', user?.email);
-          throw new Error('Failed to establish session after login');
+          console.log('❌ Session refresh failed, trying with delay...');
+
+          // Try again after a short delay (StackBlitz session sync issue)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const { data: retryData } = await supabase.auth.getSession();
+          console.log(
+            '🔄 Retry session check:',
+            retryData.session ? 'exists' : 'none'
+          );
+
+          if (!retryData.session) {
+            console.log('❌ Session still not available, checking auth state');
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            console.log('👤 Current user after failed refresh:', user?.email);
+
+            // If we have a user but no session, try one more time with longer delay
+            if (user) {
+              console.log('👤 User exists, waiting longer for session...');
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+
+              const { data: finalData } = await supabase.auth.getSession();
+              if (finalData.session) {
+                console.log('✅ Session finally available after delay');
+              } else {
+                throw new Error('Failed to establish session after login');
+              }
+            } else {
+              throw new Error('Failed to establish session after login');
+            }
+          }
         }
       }
 
       // Update this route to redirect to an authenticated route. The user already has an active session.
       console.log('🎉 Login successful, redirecting to /protected');
+
+      // Wait a moment for session to be fully established (StackBlitz issue)
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Use router.push for client-side navigation
       router.push('/protected');
