@@ -12,9 +12,15 @@ export function ClientUserInfo() {
 
     // Get initial session
     const getSession = async () => {
+      console.log('🔍 ClientUserInfo - Getting initial session');
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      console.log(
+        '📋 ClientUserInfo - Initial session:',
+        session ? 'exists' : 'none'
+      );
+      console.log('👤 ClientUserInfo - Initial user:', session?.user?.email);
       setUser(session?.user ?? null);
       setLoading(false);
     };
@@ -25,6 +31,11 @@ export function ClientUserInfo() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 ClientUserInfo - Auth state change:', event);
+      console.log(
+        '👤 ClientUserInfo - User in auth change:',
+        session?.user?.email
+      );
       setUser(session?.user ?? null);
       setLoading(false);
     });

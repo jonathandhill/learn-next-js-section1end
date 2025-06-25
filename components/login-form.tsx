@@ -63,8 +63,13 @@ export function LoginForm({
 
       if (error) throw error;
 
-      console.log('🎉 Login successful, redirecting immediately');
-      window.location.href = '/protected';
+      console.log('🎉 Login successful, waiting for session to persist...');
+
+      // Wait a moment for session to be fully established and persisted
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      console.log('🚀 Redirecting to /protected');
+      router.push('/protected');
     } catch (error: unknown) {
       console.error('💥 Login error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
