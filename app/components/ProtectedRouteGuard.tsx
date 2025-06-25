@@ -14,9 +14,10 @@ export function ProtectedRouteGuard({ children }: ProtectedRouteGuardProps) {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
+
     const checkAuth = async () => {
       console.log('🛡️ ProtectedRouteGuard - Checking authentication');
-      const supabase = getSupabaseClient();
 
       // Get initial session
       const {
