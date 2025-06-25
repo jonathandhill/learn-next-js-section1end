@@ -72,6 +72,11 @@ export function LoginForm({
       try {
         await sessionReady;
         console.log('✅ Session confirmed ready via auth state change');
+
+        // Wait a moment for cookies to sync (StackBlitz issue)
+        console.log('⏳ Waiting for cookies to sync...');
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
         window.location.href = '/protected';
       } catch (sessionError) {
         console.log('❌ Session establishment failed:', sessionError);
